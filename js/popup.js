@@ -24,7 +24,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			var row = table.insertRow(-1);
 			row.insertCell(0).innerHTML = element.url;
 			row.insertCell(1).innerHTML = element.username;
-			row.insertCell(2).innerHTML = element.password;
+			var passwordRow = row.insertCell(2);
+			passwordRow.innerHTML = element.password;
+			passwordRow.className = "hidetext";
+			var id = row.insertCell(3);
+			id.innerHTML = element.id;
+			id.style.display = "none";
+			// row.insertCell(2).innerHTML = element.password;
 		});
 	}
 
@@ -91,6 +97,7 @@ window.onload = function(e){
 				chrome.runtime.sendMessage({
 					message:'insert',
 					payload:[{
+						"id":"",
 						"url": form_data1.get('url'),
 						"username": form_data1.get('username'),
 						"password": form_data1.get('password')
@@ -128,6 +135,7 @@ window.onload = function(e){
 							if(!exp.includes(aElement[0]) && !exp.includes(aElement[1]) &&  !exp.includes(aElement[2])){
 								count = count + 1
 								var feed = {
+									"id": "",
 									"url": aElement[0],
 									"username": aElement[1],
 									"password": aElement[2]
@@ -307,7 +315,7 @@ window.onload = function(e){
 // 	})()
 
 
-// }
+}
 
 
 

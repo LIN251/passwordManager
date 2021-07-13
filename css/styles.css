@@ -89,6 +89,8 @@ body {
   width: 30%;
 }
 
+.hidetext { -webkit-text-security: disc; /* Default */ }
+
 /* *************************************** 表格 *************************************** */
 
 #table-wrapper {

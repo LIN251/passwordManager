@@ -33,6 +33,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 window.onload = function(e){ 
 
+
+
+
+
 		updateTable()
     document.getElementById("所有密码tab").onclick= function(){
 			clear()
@@ -186,6 +190,12 @@ window.onload = function(e){
 	];
 
 	document.getElementById("gen_button").onclick=function(){
+		const passwordBox = document.getElementById("passwordBox");
+		const length = document.getElementById("length");
+		passwordBox.innerHTML = getRandomString(length);
+	}
+
+	function getRandomString(length){
 		const upper = document.getElementById("upperCase").checked;
 		const lower = document.getElementById("lowerCase").checked;
 		const number = document.getElementById("number").checked;
@@ -194,17 +204,16 @@ window.onload = function(e){
 			alert("Please check atleast one box!");
 			return;
 		}
-		const passwordBox = document.getElementById("passwordBox");
-		const length = document.getElementById("length");
-		let password = "";
-		while (length.value > password.length) {
+	
+		let randomString = "";
+		while (length > randomString.length) {
 			let keyToAdd = getKey[Math.floor(Math.random() * getKey.length)];
 			let isChecked = document.getElementById(keyToAdd.name).checked;
 			if (isChecked) {
-				password += keyToAdd();
+				randomString += keyToAdd();
 			}
 		}
-		passwordBox.innerHTML = password;
+		return randomString
 	}
 
 	document.getElementById("copyPassword").onclick=function(){
@@ -223,7 +232,82 @@ window.onload = function(e){
 
 
 
-}
+// 	// **********password**********
+// 	async function deriveKey(password) {
+// 		const algo = {
+// 			name: 'PBKDF2',
+// 			hash: 'SHA-256',
+// 			salt: new TextEncoder().encode('a-unique-salt'),
+// 			iterations: 1000
+// 		}
+// 		return crypto.subtle.deriveKey(
+// 			algo,
+// 			await crypto.subtle.importKey(
+// 				'raw',
+// 				new TextEncoder().encode(password),
+// 				{
+// 					name: algo.name
+// 				},
+// 				false,
+// 				['deriveKey']
+// 			),
+// 			{
+// 				name: 'AES-GCM',
+// 				length: 256
+// 			},
+// 			false,
+// 			['encrypt', 'decrypt']
+// 		)
+// 	}
+
+// 	// Encrypt function
+// 	async function encrypt(text, password) {
+// 		const algo = {
+// 			name: 'AES-GCM',
+// 			length: 256,
+// 			iv: crypto.getRandomValues(new Uint8Array(12))
+// 		}
+// 		return {
+// 			cipherText: await crypto.subtle.encrypt(
+// 				algo,
+// 				await deriveKey(password),
+// 				new TextEncoder().encode(text)
+// 			),
+// 			iv: algo.iv
+// 		}
+// 	}
+
+// 	// Decrypt function
+// 	async function decrypt(encrypted, password) {
+// 		const algo = {
+// 			name: 'AES-GCM',
+// 			length: 256,
+// 			iv: encrypted.iv
+// 		}
+// 		return new TextDecoder().decode(
+// 			await crypto.subtle.decrypt(
+// 				algo,
+// 				await deriveKey(password),
+// 				encrypted.cipherText
+// 			)
+// 		)
+// 	}
+
+// 	secret = getRandomString(12)
+// 	alert("test!!!!!!!!!")
+// 	alert(secret)
+// 	;(async () => {
+// 		// encrypt
+// 		const encrypted = await encrypt('Secret text', secret)
+// 		alert(encrypted)
+
+// 		// decrypt it
+// 		const decrypted = await decrypt(encrypted, secret)
+// 		alert(decrypted) // Secret text
+// 	})()
+
+
+// }
 
 
 

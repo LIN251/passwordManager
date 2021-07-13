@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8 width=device-width, initial-scale=1" />
+	<script src="./js/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+	<body style="width:700px;height:200px;"></body>
+	<script type="text/javascript" src="js/popup.js"></script>
+	<link rel="stylesheet" href="css/styles.css">
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js" -->
+			<!-- integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o=" crossorigin="anonymous"></script> -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css">
+	<div class="tab">
+		<button class="tablinks" id="所有密码tab" >所有密码</button>
+		<button class="tablinks" id="增加密码tab">增加密码</button>
+		<button class="tablinks" id="自动生成tab">自动生成</button>
+		<button class="tablinks" id="安全笔记tab">安全笔记</button>
+		<button class="tablinks" id="登录账号tab">登录账号</button>
+	</div>
+
+	<div id="所有密码" class="tabcontent">
+		<input type="text" id="searchInput"  placeholder="关键词搜索.." title="所有密码">
+			<div id="table-wrapper">
+				<div id="table-scroll">
+					<table id="passwordTable">
+						<thead>
+							<tr>
+								<th><span class="text" style="width:30%;">网站</span></th>
+								<th><span class="text" style="width:20%;">账号</span></th>
+								<th><span class="text" style="width:20%;">密码</span></th>
+							</tr>
+						</thead>
+						<tbody>
+
+					</table>
+				</div>
+			</div>
+	</div>
+
+	<div id="增加密码" class="tabcontent">
+				<div id="add">
+					<form id="add_form">
+						<h3>增加密码</h3>
+						<input class="add_rec_input" type="text" name="url" id="url" placeholder="网址">
+						<br>
+						<input class="add_rec_input" type="text" name="username" id="username" placeholder="用户名">
+						<br>
+						<input class="add_rec_input" type="text" name="password" id="password" placeholder="密码">
+						<br>
+						<br>
+						<button type="submit">add</button>
+					</form>
+				</div>
+				<div id="generator">
+						<!-- <input class="gen_password_length" type="text" name="gen_password_length" id="gen_password_length" placeholder="长度">
+						&nbsp;
+						<button id="gen_button">生成随机密码</button>
+						<br>
+						<p id="gen_password"></p> -->
+						
+								<div class="password-generator">				
+									<div>
+										<label for="length">Length</label>
+										<input type="number" id="length" min="6" max="20" value="6">
+										<button id="gen_button">生成密码</button>
+									</div>
+									<div>
+										<label for="symbol">允许特殊符号</label>
+										<input type="checkbox" id="symbol" checked>
+									</div>
+									<div>
+										<label for="number">允许数字</label>
+										<input type="checkbox" id="number" checked>
+									</div>
+									<div>
+										<label for="lowerCase">允许小写字幕</label>
+										<input type="checkbox" id="lowerCase" checked>
+									</div>
+									<div>
+										<label for="upperCase">允许大写字母</label>
+										<input type="checkbox" id="upperCase" checked>
+									</div>
+									<div class="password">
+										<p id="passwordBox"></p><i class="far fa-clipboard" id=copyPassword></i></i>
+									</div>
+								</div>
+				</div>
+	</div>
+
+
+
+	<!-- TBD -->
+	<div id="自动生成" class="tabcontent">
+		<h3>自动生成</h3>
+		<p>自动生成一个密码.</p>
+	</div>
+
+	<div id="安全笔记" class="tabcontent">
+		<h3>安全笔记</h3>
+		<p>保存加密之后的笔记.</p>
+	</div>
+
+	<div id="登录账号" class="tabcontent">
+		<h3>登录账号</h3>
+		<p>登录百度云盘账号.</p>
+		<input type="file" id="fileinput" />
+	</div>
+
+
+
+</body>
+</html>

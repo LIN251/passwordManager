@@ -1,2 +1,0 @@
-# passwordManager
-chrome extention

@@ -161,11 +161,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				chrome.runtime.sendMessage({
 					message:'insert',
 					payload:[{
+						"id":"",
 						"url": String(cryptores[0]),
 						"username": String(cryptores[1]),
 						"password": String(cryptores[2])
 					}],
 					table:"record"
+					
 				})
 				updateTable("table")
 		}) 
@@ -216,6 +218,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 								count = count + 1
 								// var cryptores = encode([aElement[0],aElement[1],aElement[2]])
 								csvPayload.push( {
+								
+									"id": "",
 									"url": aElement[0],
 									"username": aElement[1],
 									"password": aElement[2]
@@ -410,6 +414,81 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	// 	const decrypted = await decrypt(encrypted, secret)
 	// 	// alert(decrypted) // Secret text
 	// })()
+
+
+// 	// **********password**********
+// 	async function deriveKey(password) {
+// 		const algo = {
+// 			name: 'PBKDF2',
+// 			hash: 'SHA-256',
+// 			salt: new TextEncoder().encode('a-unique-salt'),
+// 			iterations: 1000
+// 		}
+// 		return crypto.subtle.deriveKey(
+// 			algo,
+// 			await crypto.subtle.importKey(
+// 				'raw',
+// 				new TextEncoder().encode(password),
+// 				{
+// 					name: algo.name
+// 				},
+// 				false,
+// 				['deriveKey']
+// 			),
+// 			{
+// 				name: 'AES-GCM',
+// 				length: 256
+// 			},
+// 			false,
+// 			['encrypt', 'decrypt']
+// 		)
+// 	}
+
+// 	// Encrypt function
+// 	async function encrypt(text, password) {
+// 		const algo = {
+// 			name: 'AES-GCM',
+// 			length: 256,
+// 			iv: crypto.getRandomValues(new Uint8Array(12))
+// 		}
+// 		return {
+// 			cipherText: await crypto.subtle.encrypt(
+// 				algo,
+// 				await deriveKey(password),
+// 				new TextEncoder().encode(text)
+// 			),
+// 			iv: algo.iv
+// 		}
+// 	}
+
+// 	// Decrypt function
+// 	async function decrypt(encrypted, password) {
+// 		const algo = {
+// 			name: 'AES-GCM',
+// 			length: 256,
+// 			iv: encrypted.iv
+// 		}
+// 		return new TextDecoder().decode(
+// 			await crypto.subtle.decrypt(
+// 				algo,
+// 				await deriveKey(password),
+// 				encrypted.cipherText
+// 			)
+// 		)
+// 	}
+
+// 	secret = getRandomString(12)
+// 	alert("test!!!!!!!!!")
+// 	alert(secret)
+// 	;(async () => {
+// 		// encrypt
+// 		const encrypted = await encrypt('Secret text', secret)
+// 		alert(encrypted)
+
+// 		// decrypt it
+// 		const decrypted = await decrypt(encrypted, secret)
+// 		alert(decrypted) // Secret text
+// 	})()
 
 
 }

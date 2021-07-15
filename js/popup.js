@@ -1,43 +1,102 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.message === 'insert_success') {
-		if(request.payload){
-			document.querySelectorAll('.add_rec_input').forEach(e => e.value='')
-		}
-  }
-  else if (request.message === 'get_success'){
-			// TBD
-  }
-  else if (request.message === 'update_success'){
-			// TBD
-  }
-  else if (request.message === 'delete_success'){
-  		// TBD
-  }
-	else if (request.message === 'getAll_success'){
-		var table = document.getElementById("passwordTable")
-		var rows = table.rows;
-		var i = rows.length;
-		while (--i) {
-			table.deleteRow(i);
-		}
-		request.payload.forEach(function(element) {
-			var row = table.insertRow(-1);
-			row.insertCell(0).innerHTML = element.url;
-			row.insertCell(1).innerHTML = element.username;
-			row.insertCell(2).innerHTML = element.password;
-		});
-	}
-
-});
-
-
 window.onload = function(e){ 
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+		if (request.message === 'insert_success') {
+			if(request.payload){
+				document.querySelectorAll('.add_rec_input').forEach(e => e.value='')
+			}
+		}
+		else if (request.message === 'get_success'){
+
+			if (request.table == "record"){
+
+			}else{
+				if (request.payload == undefined){
+					var secret = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+					chrome.runtime.sendMessage({
+						message:'insert',
+						payload:[secret],
+						"table": "secret",
+					})
+				}
+				updateSec(request.payload)
+
+			}
+		}
+		else if (request.message === 'update_success'){
+				// TBD
+		}
+		else if (request.message === 'delete_success'){
+				// TBD
+		}
+		else if (request.message === 'getAll_success'){
+			if(request.type == "table"){
+					insertRecordToTable(request.payload)
+			}else{
+					download(request.payload)
+			}
+		}
+
+	});
+
+
+	var secret1 = ""
+	function updateSec(secret){
+		secret1 = secret
+	}
+
+
+	function insertRecordToTable(records){
+			var table = document.getElementById("passwordTable")
+			var rows = table.rows;
+			var i = rows.length;
+			while (--i) {
+				table.deleteRow(i);
+			}
+			records.forEach(function(element) {
+				var row = table.insertRow(-1);
+				var res = decode([element.url,element.username,element.password])
+				row.insertCell(0).innerHTML = res[0];
+				row.insertCell(1).innerHTML = res[1];
+				row.insertCell(2).innerHTML = res[2];
+			});
+	}
 
 
 
 
-		updateTable()
+	
+		function download(records){
+			var csv = secret1+"\n"
+			records.forEach(function(row) {
+							csv += row.url+","+row.username+","+row.password;
+							csv += "\n";
+			});
+			var hiddenElement = document.createElement('a');
+			hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+			hiddenElement.target = '_blank';
+			hiddenElement.download = 'passwordManager.csv';
+			hiddenElement.click(); 		
+	
+		}
+
+
+
+
+
+	function getSecret (){
+			chrome.runtime.sendMessage({
+				message:'get',
+				payload:[{
+					"table": "secret",
+					"index": 1,
+				}]
+			})
+	}
+
+
+		getSecret()
+		updateTable("table")
     document.getElementById("所有密码tab").onclick= function(){
 			clear()
 			document.getElementById("所有密码").style.display = "block";
@@ -46,14 +105,14 @@ window.onload = function(e){
 			clear()
 			document.getElementById("增加密码").style.display = "block";
 		}
-    document.getElementById("自动生成tab").onclick= function(){
-			clear()
-			document.getElementById("自动生成").style.display = "block";
-		}
-		document.getElementById("安全笔记tab").onclick= function(){
-			clear()
-			document.getElementById("安全笔记").style.display = "block";
-		}
+    // document.getElementById("自动生成tab").onclick= function(){
+		// 	clear()
+		// 	document.getElementById("自动生成").style.display = "block";
+		// }
+		// document.getElementById("安全笔记tab").onclick= function(){
+		// 	clear()
+		// 	document.getElementById("安全笔记").style.display = "block";
+		// }
 		document.getElementById("登录账号tab").onclick= function(){
 			clear()
 			document.getElementById("登录账号").style.display = "block";
@@ -82,40 +141,68 @@ window.onload = function(e){
 		const searchInput = document.getElementById('searchInput');
 		searchInput.addEventListener('keyup', lookForUrl);
 
-
-
-		//insert to database
-		document.getElementById("add_form").addEventListener('submit', event => {
-				event.preventDefault();
-				const form_data1 = new FormData(document.getElementById("add_form"))
-				chrome.runtime.sendMessage({
-					message:'insert',
-					payload:[{
-						"url": form_data1.get('url'),
-						"username": form_data1.get('username'),
-						"password": form_data1.get('password')
-					}]
-				})
-				updateTable()
-		}) 
-		
-
-
-		//get all records
-		function updateTable(){
+		//download csv
+    document.getElementById("download_csv").onclick= function(){
 				chrome.runtime.sendMessage({
 					message:'getAll',
+					type: "download"
 				})
 		}
 
 
 
 
+		//insert to database
+		document.getElementById("add_form").addEventListener('submit', event => {
+				event.preventDefault();
+				const form_data1 = new FormData(document.getElementById("add_form"))
+		
+				const cryptores = encode([form_data1.get('url'),form_data1.get('username'),form_data1.get('password')])
+				chrome.runtime.sendMessage({
+					message:'insert',
+					payload:[{
+						"url": String(cryptores[0]),
+						"username": String(cryptores[1]),
+						"password": String(cryptores[2])
+					}],
+					table:"record"
+				})
+				updateTable("table")
+		}) 
+		
+
+
+		//get all records
+		function updateTable(type){
+				chrome.runtime.sendMessage({
+					message:'getAll',
+					type: type
+				})
+		}
+
+
+		function encode(arr){
+			var res = []
+			arr.forEach(e => {
+				res.push(CryptoJS.AES.encrypt(String(e), String(secret1)))
+			})
+			return res
+		}
+
+
+		function decode(arr){
+			var res = []
+			arr.forEach(e => {
+				var decrypted = CryptoJS.AES.decrypt(e, secret1)
+				res.push(decrypted.toString(CryptoJS.enc.Utf8))
+			})
+			return res
+		}
+
 		//import csv file
 		function readSingleFile(evt) {
     var f = evt.target.files[0]; 
     if (f) {
-			
       var r = new FileReader();
       r.onload = function(e) { 
 					var count = 0
@@ -124,23 +211,24 @@ window.onload = function(e){
 					var csvPayload = []
           for (var i=0; i<lines.length; i++){
 							var aElement = lines[i].split(",")
-							var exp = ["", "url", "password","username"]
-							if(!exp.includes(aElement[0]) && !exp.includes(aElement[1]) &&  !exp.includes(aElement[2])){
+							// var exp = ["", "url", "password","username"]
+							// if(!exp.includes(aElement[0]) && !exp.includes(aElement[1]) &&  !exp.includes(aElement[2])){
 								count = count + 1
-								var feed = {
+								// var cryptores = encode([aElement[0],aElement[1],aElement[2]])
+								csvPayload.push( {
 									"url": aElement[0],
 									"username": aElement[1],
 									"password": aElement[2]
-								}
-								csvPayload.push(feed)
-							}
+								})
+							// }
           }
 					chrome.runtime.sendMessage({
 						message:'insert',
-						payload:csvPayload
+						payload:csvPayload,
+						table:"record"
 					})
 					alert(`上传成功,已导入${count}条记录。`);
-					updateTable()
+					updateTable("table")
      }
       r.readAsText(f);
     } else { 
@@ -206,6 +294,7 @@ window.onload = function(e){
 		}
 	
 		let randomString = "";
+
 		while (length > randomString.length) {
 			let keyToAdd = getKey[Math.floor(Math.random() * getKey.length)];
 			let isChecked = document.getElementById(keyToAdd.name).checked;
@@ -231,83 +320,99 @@ window.onload = function(e){
 
 
 
-
-// 	// **********password**********
-// 	async function deriveKey(password) {
-// 		const algo = {
-// 			name: 'PBKDF2',
-// 			hash: 'SHA-256',
-// 			salt: new TextEncoder().encode('a-unique-salt'),
-// 			iterations: 1000
-// 		}
-// 		return crypto.subtle.deriveKey(
-// 			algo,
-// 			await crypto.subtle.importKey(
-// 				'raw',
-// 				new TextEncoder().encode(password),
-// 				{
-// 					name: algo.name
-// 				},
-// 				false,
-// 				['deriveKey']
-// 			),
-// 			{
-// 				name: 'AES-GCM',
-// 				length: 256
-// 			},
-// 			false,
-// 			['encrypt', 'decrypt']
-// 		)
-// 	}
-
-// 	// Encrypt function
-// 	async function encrypt(text, password) {
-// 		const algo = {
-// 			name: 'AES-GCM',
-// 			length: 256,
-// 			iv: crypto.getRandomValues(new Uint8Array(12))
-// 		}
-// 		return {
-// 			cipherText: await crypto.subtle.encrypt(
-// 				algo,
-// 				await deriveKey(password),
-// 				new TextEncoder().encode(text)
-// 			),
-// 			iv: algo.iv
-// 		}
-// 	}
-
-// 	// Decrypt function
-// 	async function decrypt(encrypted, password) {
-// 		const algo = {
-// 			name: 'AES-GCM',
-// 			length: 256,
-// 			iv: encrypted.iv
-// 		}
-// 		return new TextDecoder().decode(
-// 			await crypto.subtle.decrypt(
-// 				algo,
-// 				await deriveKey(password),
-// 				encrypted.cipherText
-// 			)
-// 		)
-// 	}
-
-// 	secret = getRandomString(12)
-// 	alert("test!!!!!!!!!")
-// 	alert(secret)
-// 	;(async () => {
-// 		// encrypt
-// 		const encrypted = await encrypt('Secret text', secret)
-// 		alert(encrypted)
-
-// 		// decrypt it
-// 		const decrypted = await decrypt(encrypted, secret)
-// 		alert(decrypted) // Secret text
-// 	})()
+// 	alert()
+// var encrypted = CryptoJS.AES.encrypt("Message", "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
 
 
-// }
+// var decrypted = CryptoJS.AES.decrypt(encrypted, "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
+
+// var encrypted = CryptoJS.AES.encrypt("Message", "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
+
+
+// var decrypted = CryptoJS.AES.decrypt(encrypted, "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
+
+
+
+// document.getElementById("demo1").innerHTML = encrypted;
+// document.getElementById("demo2").innerHTML = decrypted;
+// document.getElementById("demo3").innerHTML = decrypted.toString(CryptoJS.enc.Utf8);
+
+
+	// // **********password**********
+	// async function deriveKey(password) {
+	// 	const algo = {
+	// 		name: 'PBKDF2',
+	// 		hash: 'SHA-256',
+	// 		salt: new TextEncoder().encode('a-unique-salt'),
+	// 		iterations: 1000
+	// 	}
+	// 	return crypto.subtle.deriveKey(
+	// 		algo,
+	// 		await crypto.subtle.importKey(
+	// 			'raw',
+	// 			new TextEncoder().encode(password),
+	// 			{
+	// 				name: algo.name
+	// 			},
+	// 			false,
+	// 			['deriveKey']
+	// 		),
+	// 		{
+	// 			name: 'AES-GCM',
+	// 			length: 256
+	// 		},
+	// 		false,
+	// 		['encrypt', 'decrypt']
+	// 	)
+	// }
+
+	// // Encrypt function
+	// async function encrypt(text, password) {
+	// 	const algo = {
+	// 		name: 'AES-GCM',
+	// 		length: 256,
+	// 		iv: crypto.getRandomValues(new Uint8Array(12))
+	// 	}
+	// 	return {
+	// 		cipherText: await crypto.subtle.encrypt(
+	// 			algo,
+	// 			await deriveKey(password),
+	// 			new TextEncoder().encode(text)
+	// 		),
+	// 		iv: algo.iv
+	// 	}
+	// }
+
+	// // Decrypt function
+	// async function decrypt(encrypted, password) {
+	// 	const algo = {
+	// 		name: 'AES-GCM',
+	// 		length: 256,
+	// 		iv: encrypted.iv
+	// 	}
+	// 	return new TextDecoder().decode(
+	// 		await crypto.subtle.decrypt(
+	// 			algo,
+	// 			await deriveKey(password),
+	// 			encrypted.cipherText
+	// 		)
+	// 	)
+	// }
+
+	
+
+	// ;(async () => {
+
+	// 	const encrypted = await encrypt('Secret text', secret)
+	// 	// alert(encrypted)
+
+	// 	// decrypt it
+	// 	const decrypted = await decrypt(encrypted, secret)
+	// 	// alert(decrypted) // Secret text
+	// })()
+
+
+}
 
 
 

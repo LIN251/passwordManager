@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === 'insert') {
-    let res = insert_records(request.payload)
+    let res = insert_records(request.table,request.payload)
     res.then(res => {
         chrome.runtime.sendMessage({
             message: "insert_success",
@@ -9,15 +9,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })
   }
   else if (request.message === 'get'){
-   let insert_res = get_record(request.payload)
+   let insert_res = get_record(request.payload[0].table,request.payload[0].index)
     insert_res.then(res => {
         chrome.runtime.sendMessage({
             message: "get_success",
-            payload: reinsert_ress
+            payload: res,
+            table: request.payload[0].table
         })
     })
 
   }
+
   else if (request.message === 'update'){
    let update_res = update_record(request.payload)
     update_res.then(res => {
@@ -42,7 +44,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     getAll_res.then(res => {
         chrome.runtime.sendMessage({
             message: "getAll_success",
-            payload: res
+            payload: res,
+            type: request.type
         })
     })
 
@@ -73,7 +76,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     }
 
-    // // ne 
+
     // function delete_database() {
     //     const request = window.indexedDB.deleteDatabase('passwordManagerDB');
     //     request.onerror = function (event) {
@@ -85,22 +88,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // }
 
 
-    function insert_records(records) {
+    function insert_records(table, records) {
         if (db) {
-            const insert_transaction = db.transaction(["record","secret"], "readwrite");
-            const objectStore = insert_transaction.objectStore("record");
-
+            const insert_transaction = db.transaction(table, "readwrite");
+            const objectStore = insert_transaction.objectStore(table);
             return new Promise((resolve, reject) => {
                 insert_transaction.oncomplete = function () {
                     console.log("ALL INSERT TRANSACTIONS COMPLETE.");
                     resolve(true);
                 }
-
                 insert_transaction.onerror = function () {
                     console.log("PROBLEM INSERTING RECORDS.")
                     resolve(false);
                 }
-
                 records.forEach(info => {
                     let request = objectStore.add(info);
 
@@ -114,13 +114,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
         }
     }
+    
 
 
-    function get_record(id) {
-        console.log("get recored")
+    function get_record(table, id) {
         if (db) {
-            const get_transaction = db.transaction("record", "readonly");
-            const objectStore = get_transaction.objectStore("record");
+            const get_transaction = db.transaction(table, "readonly");
+            const objectStore = get_transaction.objectStore(table);
 
             return new Promise((resolve, reject) => {
                 get_transaction.oncomplete = function () {
@@ -180,7 +180,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
 
                 let res = objectStore.getAll();
-
+                    // IDBIndex.getAllKeys();
                 res.onsuccess = function (event) {
                     resolve(event.target.result);
                 }

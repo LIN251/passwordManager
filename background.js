@@ -102,10 +102,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     resolve(false);
                 }
                 records.forEach(info => {
-                    let request = objectStore.add(info);
-
-                    request.onsuccess = function () {
-                        console.log("Added: ", info);
+                    let request = objectStore.add(info);                
+                    request.onsuccess = function (event) {
+                        info.id = event.target.result
+                        update_record(info,event.target.result,table)
                     }
                     request.onerror = function () {
                         console.log("Fail add: ", info);
@@ -114,7 +114,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
         }
     }
-    
+
+
+    function update_record(record,key,table) {
+        if (db) {
+            const put_transaction = db.transaction(table, "readwrite");
+            const objectStore = put_transaction.objectStore(table);
+
+            return new Promise((resolve, reject) => {
+                put_transaction.oncomplete = function () {
+                    console.log("ALL PUT TRANSACTIONS COMPLETE.");
+                    resolve(true);
+                }
+
+                put_transaction.onerror = function () {
+                    console.log("PROBLEM UPDATING RECORDS.")
+                    resolve(false);
+                }
+
+                objectStore.put(record,key);
+            });
+        }
+    }
+
 
 
     function get_record(table, id) {
@@ -141,26 +163,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
 
-    function update_record(record) {
-        if (db) {
-            const put_transaction = db.transaction("record", "readwrite");
-            const objectStore = put_transaction.objectStore("record");
-
-            return new Promise((resolve, reject) => {
-                put_transaction.oncomplete = function () {
-                    console.log("ALL PUT TRANSACTIONS COMPLETE.");
-                    resolve(true);
-                }
-
-                put_transaction.onerror = function () {
-                    console.log("PROBLEM UPDATING RECORDS.")
-                    resolve(false);
-                }
-
-                objectStore.put(record);
-            });
-        }
-    }
 
 
     function all_records() {
@@ -170,17 +172,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             
             return new Promise((resolve, reject) => {
                 put_transaction.oncomplete = function () {
-                    console.log("ALL PUT TRANSACTIONS COMPLETE.");
                     resolve(true);
                 }
 
                 put_transaction.onerror = function () {
-                    console.log("PROBLEM UPDATING RECORDS.")
                     resolve(false);
                 }
 
                 let res = objectStore.getAll();
-                    // IDBIndex.getAllKeys();
+                // let re2 = objectStore.getAllKeys();
+
+                // console.log(res.target.result)
+                // console.log(re2.target.result)
                 res.onsuccess = function (event) {
                     resolve(event.target.result);
                 }

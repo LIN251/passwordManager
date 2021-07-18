@@ -96,10 +96,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 				records.forEach(function(element) {
 					var row = table.insertRow(-1);
-					var res = decode([element.url,element.username,element.password])
-					row.insertCell(0).innerHTML = `<a	contenteditable="false">${res[0]}</a>`;
-					row.insertCell(1).innerHTML = `<a	contenteditable="false">${res[1]}</a>`;
-					row.insertCell(2).innerHTML = `<a	contenteditable="false">${res[2]}</a>`;
+					var res = decode([element.username,element.password])
+					row.insertCell(0).innerHTML = `<a	contenteditable="false">${element.url}</a>`;
+					row.insertCell(1).innerHTML = `<a	contenteditable="false">${res[0]}</a>`;
+					row.insertCell(2).innerHTML = `<a	contenteditable="false">${res[1]}</a>`;
 					row.insertCell(3).innerHTML = `<button id="edit">编辑</button>`;
 					row.insertCell(4).innerHTML = `<button id="delete">删除</button>`
 					row.insertCell(5).innerHTML = `<a style="display: none;">${element.id}</a>`;
@@ -144,14 +144,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 							cell1.innerHTML = cell1.innerHTML.replace("true", "false")
 							cell2.innerHTML = cell2.innerHTML.replace("true", "false")
 							cell3.innerHTML = cell3.innerHTML.replace("保存", "编辑")
-							const cryptores = encode([cell0.innerText,cell1.innerText,cell2.innerText])
+							const cryptores = encode([cell1.innerText,cell2.innerText])
 							chrome.runtime.sendMessage({
 								message:'update',
 								payload:[{
 									"id":parseInt(id),
-									"url": String(cryptores[0]),
-									"username": String(cryptores[1]),
-									"password": String(cryptores[2])
+									"url": cell0.innerText,
+									"username": String(cryptores[0]),
+									"password": String(cryptores[1])
 								}],
 								id:id,
 								table: "record"
@@ -238,14 +238,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				event.preventDefault();
 				const form_data1 = new FormData(document.getElementById("add_form"))
 		
-				const cryptores = encode([form_data1.get('url'),form_data1.get('username'),form_data1.get('password')])
+				const cryptores = encode([form_data1.get('username'),form_data1.get('password')])
 				chrome.runtime.sendMessage({
 					message:'insert',
 					payload:[{
 						"id":"",
-						"url": String(cryptores[0]),
-						"username": String(cryptores[1]),
-						"password": String(cryptores[2])
+						"url": form_data1.get('url'),
+						"username": String(cryptores[0]),
+						"password": String(cryptores[1])
 					}],
 					table:"record"
 					
@@ -395,7 +395,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 		function encode(arr){
-			// alert("encode"+secret1)
 			var res = []
 			arr.forEach(e => {
 				res.push(CryptoJS.AES.encrypt(String(e), String(secret1)))
@@ -405,7 +404,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 		function decode(arr){
-			// alert("decode   :"+secret1)
 			var res = []
 			arr.forEach(e => {
 				var decrypted = CryptoJS.AES.decrypt(String(e), String(secret1))

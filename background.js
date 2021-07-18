@@ -160,35 +160,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     function all_records() {
         if (db) {
-            const put_transaction = db.transaction("record", "readonly");
-            const objectStore = put_transaction.objectStore("record");
+
 
             const get_transaction2 = db.transaction("secret", "readonly");
             const objectStore2 = get_transaction2.objectStore("secret");
             return new Promise((resolve, reject) => {
-                put_transaction.oncomplete = function () {
-                    resolve(true);
-                }
-                put_transaction.onerror = function () {
-                    resolve(false);
-                }
+                // put_transaction.oncomplete = function () {
+                //     resolve(true);
+                // }
+                // put_transaction.onerror = function () {
+                //     resolve(false);
+                // }
                 let res2 = objectStore2.get(1);
                 var  sec =""
-                res2.onsuccess = function (event) {
-                    sec = event.target.result
+                res2.onsuccess = function (event2) {
+                    const put_transaction = db.transaction("record", "readonly");
+                    const objectStore = put_transaction.objectStore("record");
+                    let res = objectStore.getAll();
+                    res.onsuccess = function (event) {
+                        resolve([event.target.result, event2.target.result]);
+                    }
                 }
 
-                let res = objectStore.getAll();
+            
 
                 // let re2 = objectStore.getAllKeys();
 
           
 
               
-                res.onsuccess = function (event) {
-                    resolve([event.target.result,sec]);
-                }
-
+        
 
             });
         }

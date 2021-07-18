@@ -1,5 +1,25 @@
 window.onload = function(e){ 
-var secret1 = ""
+
+
+// ******************** Secret ********************
+	var secret1 = ""
+	function getSecret (){
+			chrome.runtime.sendMessage({
+				message:'get',
+				table:"secret",
+				index: 1
+			})
+	}
+
+	function updateSec(sec){
+		secret1 = sec
+
+	}
+
+	getSecret()
+
+
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		if (request.message === 'insert_success' && request.payload) {
 				document.querySelectorAll('.add_rec_input').forEach(e => e.value='')
@@ -15,6 +35,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 						"table": "secret",
 					})
 			}
+			updateSec(request.payload )
 			updateTable("table")
 		}
 
@@ -25,8 +46,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			updateTable("table")
 		}
 		else if (request.message === 'getAll_success'){
-			if(request.type == "table"){
-
+			if(request.type == "table"){	
 					secret1 = request.sec
 					insertRecordToTable(request.payload,request.sec)
 			}else{
@@ -60,17 +80,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		}
 
 
-
-
-// ******************** Secret ********************
-	function getSecret (){
-			chrome.runtime.sendMessage({
-				message:'get',
-				table:"secret",
-				index: 1
-			})
-	}
-
+	
 
 
 
@@ -257,24 +267,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           var contents = e.target.result;
           var lines = contents.split("\n");
 					var csvPayload = []
-          for (var i=0; i<lines.length; i++){
-							var aElement = lines[i].split(",")	
-								count = count + 1
-								csvPayload.push( {
-								
-									"id": "",
-									"url": aElement[0],
-									"username": aElement[1],
-									"password": aElement[2]
-								})
-          }
+
+					
+					var sec = lines[0].split(",")	
 					chrome.runtime.sendMessage({
-						message:'insert',
-						payload:csvPayload,
-						table:"record"
-					})
+							message:'update',
+							payload:[sec[1]],
+							id:1,
+							table: "secret"
+						})
+
+          for (var i=1; i<lines.length-1; i++){
+				
+							var aElement = lines[i].split(",")	
+							// if(aElement[1] == "" && aElement[2]==""&& aElement[3]==""){
+									count = count + 1
+									csvPayload.push( {
+										"id": "",
+										"url": aElement[1],
+										"username": aElement[2],
+										"password": aElement[3]
+									})
+						
+				
+							// }
+					}
+					chrome.runtime.sendMessage({
+					message:'insert',
+					payload:csvPayload,
+					table:"record"
+				})
 					alert(`上传成功,已导入${count}条记录。`);
 					updateTable("table")
+					document.getElementById("fileinput").value = null;
+					
      }
       r.readAsText(f);
     } else { 
@@ -364,6 +390,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 		function encode(arr){
+			// alert("encode"+secret1)
 			var res = []
 			arr.forEach(e => {
 				res.push(CryptoJS.AES.encrypt(String(e), String(secret1)))
@@ -373,9 +400,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 		function decode(arr){
+			// alert("decode   :"+secret1)
 			var res = []
 			arr.forEach(e => {
-				var decrypted = CryptoJS.AES.decrypt(e, String(secret1))
+				var decrypted = CryptoJS.AES.decrypt(String(e), String(secret1))
 				res.push(decrypted.toString(CryptoJS.enc.Utf8))
 			})
 			return res
@@ -384,8 +412,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 
-		getSecret()
-		updateTable("table")
+		// getSecret()
+		// updateTable("table")
 	
 }
 

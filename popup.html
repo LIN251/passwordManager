@@ -16,7 +16,7 @@
 		<button class="tablinks" id="增加密码tab">增加密码</button>
 		<!-- <button class="tablinks" id="自动生成tab">自动生成</button>
 		<button class="tablinks" id="安全笔记tab">安全笔记</button> -->
-		<button class="tablinks" id="登录账号tab">登录账号</button>
+		<button class="tablinks" id="上传下载tab">上传下载</button>
 	</div>
 
 	<div id="所有密码" class="tabcontent">
@@ -99,11 +99,19 @@
 		<p>保存加密之后的笔记.</p>
 	</div> -->
 
-	<div id="登录账号" class="tabcontent">
-		<h3>登录账号</h3>
-		<p>登录百度云盘账号.</p>
-		<input type="file" id="fileinput" />
-		<button id="download_csv">Download CSV</button>
+	<div id="上传下载" class="tabcontent">
+
+		<!-- <img src="/images/uploadButton.png" id="upfile1" style="cursor:pointer" />
+		<input type="file" id="file1" name="file1" style="display:none" /> -->
+		<br>
+		<br>
+		<div>
+			<button style="display:block" id="fileinputText">上传所有账号密码</button>
+			<input id="fileinput" style="visibility:hidden;" type="file">
+		</div>
+		<!-- <input type="file" id="fileinput" /> -->
+		<br>
+		<button id="download_csv">下载所有账号密码</button>
 
 		<!-- <br><br>
 		<label>encrypted</label>

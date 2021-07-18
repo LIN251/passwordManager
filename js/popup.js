@@ -74,9 +74,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// 	clear()
 		// 	document.getElementById("安全笔记").style.display = "block";
 		// }
-		document.getElementById("登录账号tab").onclick= function(){
+		document.getElementById("上传下载tab").onclick= function(){
 			clear()
-			document.getElementById("登录账号").style.display = "block";
+			document.getElementById("上传下载").style.display = "block";
 		}
 
 
@@ -311,6 +311,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 
+	  document.getElementById("fileinputText").onclick= function(){
+				document.getElementById('fileinput').click()
+		}
+
 	// ******************** clear tab ********************
 	function clear(){
 		var i, tablinks, tabcontent;
@@ -348,8 +352,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	];
 
 	document.getElementById("gen_button").onclick=function(){
+		
 		const passwordBox = document.getElementById("passwordBox");
-		const length = document.getElementById("length");
+		const length = document.getElementById("length").value;
 		passwordBox.innerHTML = getRandomString(length);
 	}
 

@@ -1,103 +1,44 @@
 window.onload = function(e){ 
-
+var secret1 = ""
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-		if (request.message === 'insert_success') {
-			if(request.payload){
+		if (request.message === 'insert_success' && request.payload) {
 				document.querySelectorAll('.add_rec_input').forEach(e => e.value='')
-			}
+				updateTable("table")
 		}
+
 		else if (request.message === 'get_success'){
-
-			if (request.table == "record"){
-
-			}else{
-				if (request.payload == undefined){
+			if (request.table == "secret" && request.payload == undefined){
 					var secret = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 					chrome.runtime.sendMessage({
 						message:'insert',
 						payload:[secret],
 						"table": "secret",
 					})
-				}
-				updateSec(request.payload)
-
 			}
+			updateTable("table")
 		}
+
 		else if (request.message === 'update_success'){
-				// TBD
+			updateTable("table")
 		}
 		else if (request.message === 'delete_success'){
-				// TBD
+			updateTable("table")
 		}
 		else if (request.message === 'getAll_success'){
 			if(request.type == "table"){
-					insertRecordToTable(request.payload)
+
+					secret1 = request.sec
+					insertRecordToTable(request.payload,request.sec)
 			}else{
-					download(request.payload)
+					download(request.payload,request.sec)
 			}
 		}
-
+		
 	});
 
 
-	var secret1 = ""
-	function updateSec(secret){
-		secret1 = secret
-	}
 
-
-	function insertRecordToTable(records){
-			var table = document.getElementById("passwordTable")
-			var rows = table.rows;
-			var i = rows.length;
-			while (--i) {
-				table.deleteRow(i);
-			}
-			records.forEach(function(element) {
-				var row = table.insertRow(-1);
-				var res = decode([element.url,element.username,element.password])
-				row.insertCell(0).innerHTML = res[0];
-				row.insertCell(1).innerHTML = res[1];
-				row.insertCell(2).innerHTML = res[2];
-			});
-	}
-
-
-
-
-	
-		function download(records){
-			var csv = secret1+"\n"
-			records.forEach(function(row) {
-							csv += row.url+","+row.username+","+row.password;
-							csv += "\n";
-			});
-			var hiddenElement = document.createElement('a');
-			hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
-			hiddenElement.target = '_blank';
-			hiddenElement.download = 'passwordManager.csv';
-			hiddenElement.click(); 		
-	
-		}
-
-
-
-
-
-	function getSecret (){
-			chrome.runtime.sendMessage({
-				message:'get',
-				payload:[{
-					"table": "secret",
-					"index": 1,
-				}]
-			})
-	}
-
-
-		getSecret()
-		updateTable("table")
-    document.getElementById("所有密码tab").onclick= function(){
+	  document.getElementById("所有密码tab").onclick= function(){
 			clear()
 			document.getElementById("所有密码").style.display = "block";
 		}
@@ -119,7 +60,144 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		}
 
 
-		//search
+
+
+// ******************** Secret ********************
+	function getSecret (){
+			chrome.runtime.sendMessage({
+				message:'get',
+				table:"secret",
+				index: 1
+			})
+	}
+
+
+
+
+
+	// ******************** table ********************
+		function insertRecordToTable(records,sec){
+				var index, table = document.getElementById("passwordTable")
+				var rows = table.rows;
+				var i = rows.length;
+				while (--i) {
+					table.deleteRow(i);
+				}
+
+				records.forEach(function(element) {
+					var row = table.insertRow(-1);
+					var res = decode([element.url,element.username,element.password])
+					row.insertCell(0).innerHTML = `<a	contenteditable="false">${res[0]}</a>`;
+					row.insertCell(1).innerHTML = `<a	contenteditable="false">${res[1]}</a>`;
+					row.insertCell(2).innerHTML = `<a	contenteditable="false">${res[2]}</a>`;
+					row.insertCell(3).innerHTML = `<button id="edit">编辑</button>`;
+					row.insertCell(4).innerHTML = `<button id="delete">删除</button>`
+					row.insertCell(5).innerHTML = `<a style="display: none;">${element.id}</a>`;
+				});
+
+
+			//delete button
+			for(var i = 1; i < table.rows.length; i++)
+			{
+					table.rows[i].cells[4].onclick = function()
+					{
+							index = this.parentElement.rowIndex;
+							var cell5 = table.rows[index].cells[5].innerHTML
+							chrome.runtime.sendMessage({
+								message: 'delete',
+								"id": cell5.match(/>(.*?)</i)[1]
+							})
+							table.deleteRow(index);
+					};
+			}
+			//update button
+			for(var i = 1; i < table.rows.length; i++)
+			{
+					table.rows[i].cells[3].onclick = function()
+					{
+						var index = this.parentElement.rowIndex;
+						var oneRow = table.rows[index]
+						var cell0 = oneRow.cells[0]
+						var cell1 = oneRow.cells[1]
+						var cell2 = oneRow.cells[2]
+						var cell3 = oneRow.cells[3]
+						var cell5 = oneRow.cells[5]
+						var button = cell3.innerText
+						if(button == "编辑" ){
+							cell0.innerHTML = cell0.innerHTML.replace("false", "true")
+							cell1.innerHTML = cell1.innerHTML.replace("false", "true")
+							cell2.innerHTML = cell2.innerHTML.replace("false", "true")
+							cell3.innerHTML = cell3.innerHTML.replace("编辑", "保存")
+						}else{
+							var id = cell5.innerHTML.match(/>(.*?)</i)[1]
+							cell0.innerHTML = cell0.innerHTML.replace("true", "false")
+							cell1.innerHTML = cell1.innerHTML.replace("true", "false")
+							cell2.innerHTML = cell2.innerHTML.replace("true", "false")
+							cell3.innerHTML = cell3.innerHTML.replace("保存", "编辑")
+							const cryptores = encode([cell0.innerText,cell1.innerText,cell2.innerText])
+							chrome.runtime.sendMessage({
+								message:'update',
+								payload:[{
+									"id":parseInt(id),
+									"url": String(cryptores[0]),
+									"username": String(cryptores[1]),
+									"password": String(cryptores[2])
+								}],
+								id:id,
+								table: "record"
+							})
+							updateTable("table")
+						}
+					}
+			}
+	}
+
+
+	function updateTable(type){
+			chrome.runtime.sendMessage({
+				message:'getAll',
+				type: type
+			})
+	}
+
+
+
+
+
+
+
+
+
+	// ******************** download ********************
+		function download(records,sec){
+			var csv = "1"+","+sec+"\n"
+			records.forEach(function(row) {
+							csv += row.id+","+row.url+","+row.username+","+row.password;
+							csv += "\n";
+			});
+			var hiddenElement = document.createElement('a');
+			hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+			hiddenElement.target = '_blank';
+			hiddenElement.download = 'passwordManager.csv';
+			hiddenElement.click(); 		
+	
+		}
+
+    document.getElementById("download_csv").onclick= function(){
+				chrome.runtime.sendMessage({
+					message:'getAll',
+					type: "download"
+				})
+		}
+
+
+
+
+
+
+
+  
+	// ******************** search box ********************
 		function lookForUrl() {
 			var input, filter, table, tr, td, i, txtValue;
 			input = document.getElementById("searchInput");
@@ -141,18 +219,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		const searchInput = document.getElementById('searchInput');
 		searchInput.addEventListener('keyup', lookForUrl);
 
-		//download csv
-    document.getElementById("download_csv").onclick= function(){
-				chrome.runtime.sendMessage({
-					message:'getAll',
-					type: "download"
-				})
-		}
 
 
 
 
-		//insert to database
+		// ******************** insert a record ********************
 		document.getElementById("add_form").addEventListener('submit', event => {
 				event.preventDefault();
 				const form_data1 = new FormData(document.getElementById("add_form"))
@@ -174,34 +245,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		
 
 
-		//get all records
-		function updateTable(type){
-				chrome.runtime.sendMessage({
-					message:'getAll',
-					type: type
-				})
-		}
 
 
-		function encode(arr){
-			var res = []
-			arr.forEach(e => {
-				res.push(CryptoJS.AES.encrypt(String(e), String(secret1)))
-			})
-			return res
-		}
-
-
-		function decode(arr){
-			var res = []
-			arr.forEach(e => {
-				var decrypted = CryptoJS.AES.decrypt(e, secret1)
-				res.push(decrypted.toString(CryptoJS.enc.Utf8))
-			})
-			return res
-		}
-
-		//import csv file
+		// ******************** import csv file ********************
 		function readSingleFile(evt) {
     var f = evt.target.files[0]; 
     if (f) {
@@ -212,11 +258,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           var lines = contents.split("\n");
 					var csvPayload = []
           for (var i=0; i<lines.length; i++){
-							var aElement = lines[i].split(",")
-							// var exp = ["", "url", "password","username"]
-							// if(!exp.includes(aElement[0]) && !exp.includes(aElement[1]) &&  !exp.includes(aElement[2])){
+							var aElement = lines[i].split(",")	
 								count = count + 1
-								// var cryptores = encode([aElement[0],aElement[1],aElement[2]])
 								csvPayload.push( {
 								
 									"id": "",
@@ -224,7 +267,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 									"username": aElement[1],
 									"password": aElement[2]
 								})
-							// }
           }
 					chrome.runtime.sendMessage({
 						message:'insert',
@@ -243,8 +285,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 
-
-	//clear tab
+	// ******************** clear tab ********************
 	function clear(){
 		var i, tablinks, tabcontent;
 		tabcontent = document.getElementsByClassName("tabcontent");
@@ -258,8 +299,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	}
 
 
-
-	//password generator
+	// ******************** password generator ********************
 	const keys = {
 		upperCase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 		lowerCase: "abcdefghijklmnopqrstuvwxyz",
@@ -323,183 +363,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 
-
-// 	alert()
-// var encrypted = CryptoJS.AES.encrypt("Message", "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
-
-
-// var decrypted = CryptoJS.AES.decrypt(encrypted, "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
-
-// var encrypted = CryptoJS.AES.encrypt("Message", "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
-
-
-// var decrypted = CryptoJS.AES.decrypt(encrypted, "U2FsdGVkX18ZUVvShFSES21qHsQEqZXMxQ9zgHy+bu0=");
+		function encode(arr){
+			var res = []
+			arr.forEach(e => {
+				res.push(CryptoJS.AES.encrypt(String(e), String(secret1)))
+			})
+			return res
+		}
 
 
+		function decode(arr){
+			var res = []
+			arr.forEach(e => {
+				var decrypted = CryptoJS.AES.decrypt(e, String(secret1))
+				res.push(decrypted.toString(CryptoJS.enc.Utf8))
+			})
+			return res
+		}
 
-// document.getElementById("demo1").innerHTML = encrypted;
-// document.getElementById("demo2").innerHTML = decrypted;
-// document.getElementById("demo3").innerHTML = decrypted.toString(CryptoJS.enc.Utf8);
 
 
-	// // **********password**********
-	// async function deriveKey(password) {
-	// 	const algo = {
-	// 		name: 'PBKDF2',
-	// 		hash: 'SHA-256',
-	// 		salt: new TextEncoder().encode('a-unique-salt'),
-	// 		iterations: 1000
-	// 	}
-	// 	return crypto.subtle.deriveKey(
-	// 		algo,
-	// 		await crypto.subtle.importKey(
-	// 			'raw',
-	// 			new TextEncoder().encode(password),
-	// 			{
-	// 				name: algo.name
-	// 			},
-	// 			false,
-	// 			['deriveKey']
-	// 		),
-	// 		{
-	// 			name: 'AES-GCM',
-	// 			length: 256
-	// 		},
-	// 		false,
-	// 		['encrypt', 'decrypt']
-	// 	)
-	// }
 
-	// // Encrypt function
-	// async function encrypt(text, password) {
-	// 	const algo = {
-	// 		name: 'AES-GCM',
-	// 		length: 256,
-	// 		iv: crypto.getRandomValues(new Uint8Array(12))
-	// 	}
-	// 	return {
-	// 		cipherText: await crypto.subtle.encrypt(
-	// 			algo,
-	// 			await deriveKey(password),
-	// 			new TextEncoder().encode(text)
-	// 		),
-	// 		iv: algo.iv
-	// 	}
-	// }
-
-	// // Decrypt function
-	// async function decrypt(encrypted, password) {
-	// 	const algo = {
-	// 		name: 'AES-GCM',
-	// 		length: 256,
-	// 		iv: encrypted.iv
-	// 	}
-	// 	return new TextDecoder().decode(
-	// 		await crypto.subtle.decrypt(
-	// 			algo,
-	// 			await deriveKey(password),
-	// 			encrypted.cipherText
-	// 		)
-	// 	)
-	// }
-
+		getSecret()
+		updateTable("table")
 	
-
-	// ;(async () => {
-
-	// 	const encrypted = await encrypt('Secret text', secret)
-	// 	// alert(encrypted)
-
-	// 	// decrypt it
-	// 	const decrypted = await decrypt(encrypted, secret)
-	// 	// alert(decrypted) // Secret text
-	// })()
-
-
-// 	// **********password**********
-// 	async function deriveKey(password) {
-// 		const algo = {
-// 			name: 'PBKDF2',
-// 			hash: 'SHA-256',
-// 			salt: new TextEncoder().encode('a-unique-salt'),
-// 			iterations: 1000
-// 		}
-// 		return crypto.subtle.deriveKey(
-// 			algo,
-// 			await crypto.subtle.importKey(
-// 				'raw',
-// 				new TextEncoder().encode(password),
-// 				{
-// 					name: algo.name
-// 				},
-// 				false,
-// 				['deriveKey']
-// 			),
-// 			{
-// 				name: 'AES-GCM',
-// 				length: 256
-// 			},
-// 			false,
-// 			['encrypt', 'decrypt']
-// 		)
-// 	}
-
-// 	// Encrypt function
-// 	async function encrypt(text, password) {
-// 		const algo = {
-// 			name: 'AES-GCM',
-// 			length: 256,
-// 			iv: crypto.getRandomValues(new Uint8Array(12))
-// 		}
-// 		return {
-// 			cipherText: await crypto.subtle.encrypt(
-// 				algo,
-// 				await deriveKey(password),
-// 				new TextEncoder().encode(text)
-// 			),
-// 			iv: algo.iv
-// 		}
-// 	}
-
-// 	// Decrypt function
-// 	async function decrypt(encrypted, password) {
-// 		const algo = {
-// 			name: 'AES-GCM',
-// 			length: 256,
-// 			iv: encrypted.iv
-// 		}
-// 		return new TextDecoder().decode(
-// 			await crypto.subtle.decrypt(
-// 				algo,
-// 				await deriveKey(password),
-// 				encrypted.cipherText
-// 			)
-// 		)
-// 	}
-
-// 	secret = getRandomString(12)
-// 	alert("test!!!!!!!!!")
-// 	alert(secret)
-// 	;(async () => {
-// 		// encrypt
-// 		const encrypted = await encrypt('Secret text', secret)
-// 		alert(encrypted)
-
-// 		// decrypt it
-// 		const decrypted = await decrypt(encrypted, secret)
-// 		alert(decrypted) // Secret text
-// 	})()
-
-
 }
 
 
 
-
-
-//baidu
-// https://openapi.baidu.com/oauth/2.0/
-//login_success#expires_in=2592000&
-//access_token=123.d9f2c2204be8065f434b7154bdd46a80.Ynd-sgd2Y2OIJdVcsEyl76VnM4Nxq99CeM1Yxje.cOhNIw
-//&session_secret=&session_key=&scope=basic+netdisk
 
